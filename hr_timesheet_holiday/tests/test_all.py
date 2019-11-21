@@ -1,14 +1,19 @@
 # -*- coding: utf-8 -*-
 # © 2016 Sunflower IT (http://sunflowerweb.nl)
+# Copyright 2019 Coop IT Easy SCRLfs
+#   - Vincent Van Rossem <vincent@coopiteasy.be>
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 import time
-from openerp.tests.common import TransactionCase
-from openerp.exceptions import ValidationError
+from openerp.addons.hr_holidays.tests.common import TestHrHolidaysBase
+from openerp.exceptions import UserError, ValidationError
 
 
-class TimesheetHolidayTest(TransactionCase):
+class TimesheetHolidayTest(TestHrHolidaysBase):
     def setUp(self):
         super(TimesheetHolidayTest, self).setUp()
+        self.leave = self.env['hr.holidays']
+        self.employee = self.env.ref('hr.employee_qdp')
+
         # Working day is 7 hours per day
         self.env.ref('base.main_company') \
             .timesheet_hours_per_day = 7.0
@@ -17,7 +22,6 @@ class TimesheetHolidayTest(TransactionCase):
         self.account = self.env['account.analytic.account'].create({
             'name': 'Sick Leaves',
             'is_leave_account': True,
-            'type': 'normal',
         })
 
         # Link sick leave to analytic account
@@ -25,6 +29,7 @@ class TimesheetHolidayTest(TransactionCase):
         self.sl.write({
             'analytic_account_id': self.account.id
         })
+        self.employee = self.env.ref('hr.employee_qdp')
 
     def test_leave(self):
         # Create sick leave for Pieter Parker
@@ -61,67 +66,3 @@ class TimesheetHolidayTest(TransactionCase):
         leave.signal_workflow('refuse')
         hours_final = sum(self.account.line_ids.mapped('unit_amount'))
         self.assertEqual(hours_final, hours_before)
-
-    def test_analytic(self):
-        manager = self.env.ref('hr.employee_fp')
-        employee = self.env.ref('hr.employee_qdp')
-        employee.write(employee.default_get(['product_id', 'journal_id']))
-
-        # create timesheet line with 6.0 hours of sick leave
-        line = self.env['hr.analytic.timesheet'].sudo(
-            employee.user_id,
-        ).default_get([
-            'general_account_id', 'journal_id', 'name', 'product_id',
-            'product_uom_id',
-        ])
-        line.update(self.env['hr.analytic.timesheet'].on_change_account_id(
-            self.account.id, employee.user_id.id
-        )['value'])
-        line.update(
-            account_id=self.account.id,
-            date=time.strftime('%Y-%m-06'),
-            name='/',
-            unit_amount=6,
-        )
-
-        # create and confirm a timesheet with the 6.0 hours line
-        sheet = self.env['hr_timesheet_sheet.sheet'].sudo(
-            employee.user_id
-        ).create({
-            'employee_id': employee.id,
-            'date_from': time.strftime('%Y-%m-06'),
-            'date_to': time.strftime('%Y-%m-12'),
-            'timesheet_ids': [(0, 0, line)],
-        })
-        sheet.signal_workflow('confirm')
-        self.assertEqual(sheet.state, 'confirm')
-
-        # fully approve timesheet
-        leaves_taken_before = self.account.holiday_status_ids.sudo(
-            employee.user_id
-        ).leaves_taken
-        sheet.sudo(manager.user_id).signal_workflow('done')
-        self.assertEqual(sheet.state, 'done')
-
-        # assert that total leave has increases
-        leaves_taken_after = self.account.holiday_status_ids.sudo(
-            employee.user_id
-        ).leaves_taken
-        self.assertAlmostEqual(
-            leaves_taken_before + 6.0 / 7.0,
-            leaves_taken_after,
-            2
-        )
-
-        # resubmit timesheet with 8.0 hours of leave
-        # sheet.create_workflow()
-        # self.assertEquals(sheet.state, 'draft')
-        # sheet.timesheet_ids.write(dict(unit_amount=8))
-        # sheet.signal_workflow('confirm')
-        # sheet.signal_workflow('done')
-        # self.assertEqual(sheet.state, 'done')
-        # self.assertAlmostEqual(
-        #     leaves_taken_before + 8.0 / 7.0,
-        #     leaves_taken_after,
-        #     2
-        # )
