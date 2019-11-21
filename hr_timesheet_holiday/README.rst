@@ -8,9 +8,7 @@ Link holidays to analytic lines
 
 This module adds a relation between Leave Type and Analytic Account.
 When a Leave Request is granted, the granted days are converted to hours and
-added as a line to the Analytic Account. Conversely, when a timesheet line
-with an analytic account pointed to by a Leave Type is approved, this will
-result in an approved leave request.
+added as a line to the Analytic Account.
 
 When the leave is revoked, the analytic lines are removed again.
 
@@ -28,10 +26,11 @@ Configuration
 
 To configure this module, you need to:
 
-#. Find your company in Settings - Companies and configure the amount of hours
-   per workday under Configuration - Timesheets - Timesheet Hours Per Day.
-#. For each Leave Type under Human Resources - Leave Types, select or create
-   an Analytic Account.
+#. Find your company in Settings > General Settings > Configure your company data
+   and configure the amount of hours per workday under
+   Configuration > Timesheets > Timesheet Hours Per Day.
+#. For each Leave Type in Leaves > Configuration > Leave Types,
+   select or create an Analytic Account (Leave Account).
 
 Usage
 =====
@@ -73,6 +72,7 @@ Contributors
 * Tom Blauwendraat <tom@sunflowerweb.nl>
 * Terrence Nzaywa <terrence@sunflowerweb.nl>
 * Holger Brunn <hbrunn@therp.nl>
+* Vincent Van Rossem <vincent@coopiteasy.be>
 
 Maintainer
 ----------
