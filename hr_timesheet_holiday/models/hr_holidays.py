@@ -21,10 +21,12 @@ class HrHolidays(models.Model):
     )
 
     @api.multi
-    def add_timesheet_line(self, description, date, hours, account, user):
+    def add_timesheet_line(self, description, date, hours, account):
         """Add a timesheet line for this leave"""
         self.ensure_one()
-        self.sudo(user.id).with_context(force_write=True).write(
+        # User exists because already check during the holidays_validate
+        user = self.employee_id.user_id
+        self.sudo().with_context(force_write=True).write(
             {'analytic_line_ids': [(0, False, {
                 'name': description,
                 'date': date,
@@ -85,7 +87,6 @@ class HrHolidays(models.Model):
                     date=dt_current,
                     hours=hours_per_day,
                     account=account,
-                    user=user
                 )
 
         return res
