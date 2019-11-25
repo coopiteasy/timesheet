@@ -9,9 +9,9 @@ from openerp import models, fields
 
 class HrHolidaysStatus(models.Model):
     """Add analytic account to holiday status"""
-    _inherit = 'hr.holidays.status'
+
+    _inherit = "hr.holidays.status"
 
     analytic_account_id = fields.Many2one(
-        'account.analytic.account',
-        'Analytic Account'
+        "account.analytic.account", "Analytic Account"
     )
