@@ -12,12 +12,11 @@ from openerp.exceptions import Warning as UserError
 
 class HrHolidays(models.Model):
     """Update analytic lines on status change of Leave Request"""
-    _inherit = 'hr.holidays'
+
+    _inherit = "hr.holidays"
 
     analytic_line_ids = fields.One2many(
-        'account.analytic.line',
-        'leave_id',
-        'Analytic Lines',
+        "account.analytic.line", "leave_id", "Analytic Lines"
     )
 
     @api.multi
@@ -27,15 +26,24 @@ class HrHolidays(models.Model):
         # User exists because already check during the holidays_validate
         user = self.employee_id.user_id
         self.sudo().with_context(force_write=True).write(
-            {'analytic_line_ids': [(0, False, {
-                'name': description,
-                'date': date,
-                'unit_amount': hours,
-                'company_id': self.employee_id.company_id.id,
-                'account_id': account.id,
-                'user_id': user.id,
-                'is_timesheet': True,
-            })]})
+            {
+                "analytic_line_ids": [
+                    (
+                        0,
+                        False,
+                        {
+                            "name": description,
+                            "date": date,
+                            "unit_amount": hours,
+                            "company_id": self.employee_id.company_id.id,
+                            "account_id": account.id,
+                            "user_id": user.id,
+                            "is_timesheet": True,
+                        },
+                    )
+                ]
+            }
+        )
 
     @api.model
     def _get_hours_per_day(self, company, employee):
@@ -43,8 +51,9 @@ class HrHolidays(models.Model):
         hours_per_day = company.timesheet_hours_per_day
         if not hours_per_day:
             raise UserError(
-                _("No hours per day defined for Company '%s'") %
-                (company.name,))
+                _("No hours per day defined for Company '%s'")
+                % (company.name,)
+            )
         return hours_per_day
 
     @api.multi
@@ -55,7 +64,11 @@ class HrHolidays(models.Model):
         # Postprocess Leave Types that have an analytic account configured
         for leave in self:
             account = leave.holiday_status_id.analytic_account_id
-            if not account or leave.type != 'remove' or leave.analytic_line_ids:
+            if (
+                not account
+                or leave.type != "remove"
+                or leave.analytic_line_ids
+            ):
                 # we only work on leaves (type=remove, type=add is allocation)
                 # which have an account set and dont yet point to a leave
                 continue
@@ -69,8 +82,9 @@ class HrHolidays(models.Model):
             user = leave.employee_id.user_id
             if not user:
                 raise UserError(
-                    _("No user defined for Employee '%s'") %
-                    (leave.employee_id.name,))
+                    _("No user defined for Employee '%s'")
+                    % (leave.employee_id.name,)
+                )
 
             # Add analytic lines for these leave hours
             dt_from = fields.Datetime.from_string(leave.date_from)
@@ -95,7 +109,7 @@ class HrHolidays(models.Model):
     def holidays_refuse(self):
         """On refusal of leave, delete timesheet lines"""
         res = super(HrHolidays, self).holidays_refuse()
-        self.mapped('analytic_line_ids') \
-            .with_context(force_write=True) \
-            .unlink()
+        self.mapped("analytic_line_ids").with_context(
+            force_write=True
+        ).unlink()
         return res
