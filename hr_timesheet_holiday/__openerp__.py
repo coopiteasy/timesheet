@@ -13,7 +13,7 @@
     "author": "Coop IT Easy SCRLfs, Sunflower IT, Therp BV, Odoo Community Association (OCA)",
     "website": "www.coopiteasy.be",
     "license": "AGPL-3",
-    "depends": ["hr_holidays", "hr_timesheet_sheet"],
+    "depends": ["hr_holidays", "hr_timesheet_sheet", "hr_contract"],
     "data": ["views/hr_holidays_view.xml", "views/company_view.xml"],
     "installable": True,
 }
