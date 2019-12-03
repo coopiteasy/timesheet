@@ -18,5 +18,5 @@ class AnalyticAccount(models.Model):
         default=False,
     )
     holiday_status_ids = fields.One2many(
-        "hr.holidays.status", "analytic_account_id"
+        comodel_name="hr.holidays.status", inverse_name="analytic_account_id"
     )

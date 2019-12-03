@@ -15,11 +15,13 @@ When the leave is revoked, the analytic lines are removed again.
 The analytic lines are read-only, so you cannot edit them directly, just by
 granting or revoking leave requests.
 
-The hours to input per day is configurable at company level.
+The hours to input per day is configurable at employee's contracts level
+OR at company level
 
 Limitations:
 
-- Consider that the work days are Monday to Friday
+- If no contracts are defined for an employee, the company hours prevail
+- Consider that the work days are Monday to Sunday
 
 Configuration
 =============
@@ -41,14 +43,6 @@ To use this module, you need to:
 #. See the hours added to Timesheet Activities
 #. Revoke a Leave Request
 #. See the hours removed from Timesheet Activities
-
-Known issues / Roadmap
-======================
-
-* Hours per workday should be configurable per employee, not only by company.
-  To make this easier, the function `_get_hours_per_day` was made which can be
-  overridden by child modules.
-* We should probably start using resource calendars.
 
 Bug Tracker
 ===========

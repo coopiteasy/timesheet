@@ -46,7 +46,7 @@ class TimesheetHolidayTest(TestHrHolidaysBase):
         leave.signal_workflow("validate")
         leave.signal_workflow("second_validate")
         hours_after = sum(self.account.line_ids.mapped("unit_amount"))
-        self.assertEqual(hours_after - hours_before, 35.0)
+        self.assertEqual(hours_after - hours_before, 49.0)
 
         # Test editing of lines forbidden
         self.assertRaises(
@@ -60,7 +60,7 @@ class TimesheetHolidayTest(TestHrHolidaysBase):
             {"unit_amount": 5.0}
         )
         hours_after = sum(self.account.line_ids.mapped("unit_amount"))
-        self.assertEqual(hours_after - hours_before, 33.0)
+        self.assertEqual(hours_after - hours_before, 47.0)
 
         # Refuse leave and check hours removed from account
         leave.signal_workflow("refuse")

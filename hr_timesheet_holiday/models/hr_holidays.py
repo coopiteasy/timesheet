@@ -4,7 +4,7 @@
 #   - Vincent Van Rossem <vincent@coopiteasy.be>
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 from openerp import models, fields, api, _
 from openerp.exceptions import Warning as UserError
@@ -46,14 +46,27 @@ class HrHolidays(models.Model):
         )
 
     @api.model
-    def _get_hours_per_day(self, company, employee):
-        """Can be overridden to consider employee details also"""
+    def _get_company_hours_per_day(self, company):
         hours_per_day = company.timesheet_hours_per_day
         if not hours_per_day:
             raise UserError(
                 _("No hours per day defined for Company '%s'")
                 % (company.name,)
             )
+        return hours_per_day
+
+    @api.model
+    def _get_contract_hours_per_day(self, employee, date):
+        hours_per_day = 0.0
+        contracts = (
+            self.env["hr.contract"]
+            .sudo()
+            .search([("employee_id.id", "=", employee.id)])
+        )
+        for contract in contracts:
+            for calendar in contract.working_hours:
+                for wh in calendar.get_working_hours_of_date(start_dt=date):
+                    hours_per_day += wh
         return hours_per_day
 
     @api.multi
@@ -76,7 +89,6 @@ class HrHolidays(models.Model):
             # Assert hours per working day
             employee = leave.employee_id
             company = employee.company_id
-            hours_per_day = self._get_hours_per_day(company, employee)
 
             # Assert user connected to employee
             user = leave.employee_id.user_id
@@ -91,17 +103,22 @@ class HrHolidays(models.Model):
             for day in range(abs(int(leave.number_of_days))):
                 dt_current = dt_from + timedelta(days=day)
 
-                # skip the non work days
-                day_of_the_week = dt_current.isoweekday()
-                if day_of_the_week in (6, 7):
-                    continue
+                # Assert hours per working day
+                if employee.contract_ids:
+                    hours_per_day = self._get_contract_hours_per_day(
+                        employee, dt_current
+                    )
+                else:
+                    hours_per_day = self._get_company_hours_per_day(company)
 
-                leave.add_timesheet_line(
-                    description=leave.name or leave.holiday_status_id.name,
-                    date=dt_current,
-                    hours=hours_per_day,
-                    account=account,
-                )
+                # Skip the days not covered by a contract
+                if hours_per_day:
+                    leave.add_timesheet_line(
+                        description=leave.name or leave.holiday_status_id.name,
+                        date=dt_current,
+                        hours=hours_per_day,
+                        account=account,
+                    )
 
         return res
 
