@@ -7,7 +7,6 @@
 import datetime
 from datetime import timedelta
 
-
 from openerp import models, fields, api, _
 from openerp.exceptions import Warning as UserError
 
@@ -52,7 +51,7 @@ class HrHolidays(models.Model):
         hours_per_day = company.timesheet_hours_per_day
         if not hours_per_day:
             raise UserError(
-                _("No hours per day defined for Company '%s'")
+                _("Hours per day not defined for company '%s'")
                 % (company.name,)
             )
         return hours_per_day
@@ -61,12 +60,19 @@ class HrHolidays(models.Model):
     def _get_contract_hours_per_day(self, employee, date):
         self.ensure_one()
         start_dt = date
-        end_dt = False
-        from_dt = self._compute_datetime(self.date_from)
-        to_dt = self._compute_datetime(self.date_to)
-        if date.date() == from_dt.date():
+        end_dt = None
+        from_dt = fields.Datetime.from_string(self.date_from)
+        to_dt = fields.Datetime.from_string(self.date_to)
+        if date.date() == from_dt.date() and date.date() == to_dt.date():
             start_dt = from_dt
+            end_dt = to_dt
+        elif date.date() == from_dt.date():
+            start_dt = from_dt
+            end_dt = date.replace(
+                hour=23, minute=59, second=59, microsecond=999999
+            )
         elif date.date() == to_dt.date():
+            start_dt = date.replace(hour=0, minute=0, second=0, microsecond=0)
             end_dt = to_dt
         hours_per_day = 0.0
         contracts = (
@@ -76,27 +82,11 @@ class HrHolidays(models.Model):
         )
         for contract in contracts:
             for calendar in contract.working_hours:
-                if end_dt:
-                    working_hours = calendar.get_working_hours_of_date(start_dt=start_dt, end_dt=end_dt)
-                else:
-                    working_hours = calendar.get_working_hours_of_date(start_dt=start_dt)
-                for wh in working_hours:
-                    hours_per_day += wh
+                working_hours = calendar.get_working_hours_of_date(
+                    start_dt=start_dt, end_dt=end_dt
+                )
+                hours_per_day += sum(wh for wh in working_hours)
         return hours_per_day
-
-    @api.model
-    def _compute_datetime(self, date):
-        dt = False
-        if date:
-            this_year = datetime.date.today().year
-            reference_date = fields.Datetime.context_timestamp(
-                self.env.user, datetime.datetime(this_year, 1, 1, 12)
-            )
-            dt = fields.Datetime.from_string(date)
-            tz_dt = fields.Datetime.context_timestamp(self.env.user, dt)
-            dt = dt + tz_dt.tzinfo._utcoffset
-            dt = dt - reference_date.tzinfo._utcoffset
-        return dt
 
     @api.multi
     def holidays_validate(self):
@@ -120,7 +110,7 @@ class HrHolidays(models.Model):
             company = employee.company_id
 
             # Assert user connected to employee
-            user = leave.employee_id.user_id
+            user = employee.user_id
             if not user:
                 raise UserError(
                     _("No user defined for Employee '%s'")
@@ -129,10 +119,10 @@ class HrHolidays(models.Model):
 
             # Add analytic lines for these leave hours
             dt_from = fields.Datetime.from_string(leave.date_from)
-            for day in range(abs(int(leave.number_of_days))):
+            for day in range(abs(int(round(leave.number_of_days)))):
                 dt_current = dt_from + timedelta(days=day)
 
-                # Assert hours per working day
+                # get hours per working day
                 if employee.contract_ids:
                     hours_per_day = self._get_contract_hours_per_day(
                         employee, dt_current
