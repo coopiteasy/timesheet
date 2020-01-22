@@ -119,7 +119,8 @@ class HrHolidays(models.Model):
 
             # Add analytic lines for these leave hours
             dt_from = fields.Datetime.from_string(leave.date_from)
-            for day in range(abs(int(round(leave.number_of_days)))):
+            dt_to = fields.Datetime.from_string(leave.date_to)
+            for day in range((dt_to - dt_from).days + 1):
                 dt_current = dt_from + timedelta(days=day)
 
                 # get hours per working day
