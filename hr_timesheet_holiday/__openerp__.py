@@ -11,7 +11,9 @@
     "category": "Generic Modules/Human Resources",
     "summary": """When holidays are granted, add lines to the analytic account
         that is linked to the Leave Type""",
-    "author": "Coop IT Easy SCRLfs, Sunflower IT, Therp BV, Odoo Community Association (OCA)",
+    "author": "Coop IT Easy SCRLfs, "
+              "Sunflower IT, Therp BV, "
+              "Odoo Community Association (OCA)",
     "website": "www.coopiteasy.be",
     "license": "AGPL-3",
     "depends": ["hr_holidays", "hr_timesheet_sheet", "hr_contract"],

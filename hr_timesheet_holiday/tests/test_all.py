@@ -5,7 +5,7 @@
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 import time
 from openerp.addons.hr_holidays.tests.common import TestHrHolidaysBase
-from openerp.exceptions import UserError, ValidationError
+from openerp.exceptions import ValidationError
 
 
 class TimesheetHolidayTest(TestHrHolidaysBase):

@@ -4,7 +4,6 @@
 #   - Vincent Van Rossem <vincent@coopiteasy.be>
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
-import datetime
 from datetime import timedelta
 
 from openerp import models, fields, api, _
