@@ -134,7 +134,7 @@ class HrHolidays(models.Model):
                 if hours_per_day:
                     leave.add_timesheet_line(
                         description=leave.name or leave.holiday_status_id.name,
-                        date=dt_current,
+                        date=fields.Date.to_string(dt_current),
                         hours=hours_per_day,
                         account=account,
                     )
